@@ -1,0 +1,124 @@
+ - SQL:
+create database collegedb;
+use collegedb;
+create table pract5_userform(id int, name varchar(100), email varchar(100), password varchar(100));
+INSERT INTO pract5_userform (id, name, email, password) 
+VALUES (1, 'HANOCH', 'HANOCHS57@GMAIL.COM', '12345');
+select * from pract5_userform;
+
+ - index.jsp:
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Practical 7a - Registration Form</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>                                                                                               Output:
+        <h1>Registration Form</h1>                                                    
+        <form action="validate.jsp" method="Post">
+            <table>
+                <tr>
+                    <td>ID: </td>
+                    <td><input type="text" name="ID"/>
+                </tr>
+                <tr>
+                    <td>Full Name: </td>    
+                    <td><input type="text" name="fullname"/>
+                </tr>
+                <tr>
+                    <td>Email: </td>
+                    <td><input type="text" name="email"/>
+                </tr>
+                <tr>
+                    <td>Password: </td>
+                    <td><input type="text" name="password"/>
+                </tr>
+                <tr>
+                    <td>Confirm Password: </td>
+                    <td><input type="text" name="confirmpassword"/>
+                </tr>
+            </table>
+            <input type="submit" value="Update"/>
+        </form>
+    </body>
+</html>
+
+ - validate.jsp:
+Validate.jsp
+<%!private static final String EMAIL_REGEX="^[\\w-\\+]+(\\.[\\w]+)*@[\\w-]+(\\.[\\w]+)*(\\.[a-z]{2,})$";%>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page import="java.sql.*" %> <%-- 1. Import JDBC classes --%>
+
+<%
+    String Id = request.getParameter("ID");
+    String name = request.getParameter("fullname");
+    String email = request.getParameter("email");
+    String password = request.getParameter("password");
+    String confirmpassword = request.getParameter("confirmpassword");
+    
+    boolean is_valid = true;
+    
+//    if (Id==null|| Id.isEmpty()|| name == null || name.isEmpty() ||  email == null || email.isEmpty() || password == null || password.isEmpty()) {
+//        out.println("<font color=red> Enter proper details</font><br>");
+//        is_valid=false;
+//    }
+    if(email==null||!email.matches(EMAIL_REGEX)){
+        out.println("<font color=red>Correct Your Email Address</font><br>");
+        is_valid = false;
+    }
+    if(password==null||!password.equals(confirmpassword)){
+        out.println("<font color=red>Password doesnot match</font><br>");
+         is_valid=false;
+    }
+    
+    if(is_valid==true){
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            String dbUrl = "jdbc:mysql://localhost:3306/collegedb?useSSL=false&allowPublicKeyRetrieval=true";
+            String dbUser = "root";
+            String dbPass = "12345";
+        
+        // Load Driver and establish the connection
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        conn = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+
+        // SQL Query to insert values securely using placeholders
+   
+        String sql = "UPDATE pract5_userform SET name = ?, email = ?, password = ? WHERE ID = ?";
+        pstmt = conn.prepareStatement(sql);
+        
+        pstmt.setString(1, name);
+        pstmt.setString(2, email);
+        pstmt.setString(3, password); // Note: Production code should hash this password
+        pstmt.setString(4, Id);
+          
+        int rowsInserted = pstmt.executeUpdate();
+        if (rowsInserted > 0) {
+            out.println("<font color=green><b>Registration successful! Data saved to database.</b></font><br><br>");
+        }
+    } catch (ClassNotFoundException e) {
+        out.println("<font color=red>Database Driver Error: " + e.getMessage() + "</font><br>");
+    } catch (SQLException e) {
+        out.println("<font color=red>Database Execution Error: " + e.getMessage() + "</font><br>");
+    } finally {
+        // Always close JDBC resources to clean up connections
+        if (pstmt != null) try { pstmt.close(); } catch (SQLException ignore) {}
+        if (conn != null) try { conn.close(); } catch (SQLException ignore) {}
+    }
+}
+%>
+<%-- Displaying Summary --%>
+<% if(is_valid) { %>
+    Your Extended Information is as follows:<br><br>
+    ID<b>:<%=Id%></b><br>
+    Full Name<b>:<%=name%></b><br>
+    EMail<b>:<%=email%></b><br>
+<% } %>
